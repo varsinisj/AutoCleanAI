@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoClean AI — Agentic Data Cleaning</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --card: #13131c;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --accent: #00e5a0;
+    --accent2: #7c6dff;
+    --accent3: #ff6b6b;
+    --text: #f0f0f8;
+    --text2: #8888aa;
+    --text3: #555570;
+    --success: #00e5a0;
+    --warning: #ffb547;
+    --error: #ff6b6b;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width: 600px; height: 600px; background: rgba(0,229,160,0.06); top: -200px; right: -200px; }
+  .orb-2 { width: 400px; height: 400px; background: rgba(124,109,255,0.06); bottom: 0; left: -100px; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 32px 0 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--accent); }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 100px;
+    letter-spacing: 1px;
+  }
+
+  /* ── HERO ── */
+  .hero { text-align: center; padding: 0 0 80px; }
+  .hero-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,160,0.2);
+    background: rgba(0,229,160,0.05);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 6vw, 76px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+  }
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text2);
+    max-width: 520px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── STATS ROW ── */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 64px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card-full { grid-column: 1 / -1; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-green { background: rgba(0,229,160,0.1); }
+  .icon-purple { background: rgba(124,109,255,0.1); }
+  .icon-red { background: rgba(255,107,107,0.1); }
+  .icon-amber { background: rgba(255,181,71,0.1); }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .card-subtitle { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.03);
+  }
+  .upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 40px; margin-bottom: 16px; }
+  .upload-text {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .upload-sub { font-size: 13px; color: var(--text3); font-family: var(--font-mono); }
+  .upload-filename {
+    display: none;
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: rgba(0,229,160,0.08);
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  /* ── PROFILE GRID ── */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .profile-stat {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .profile-stat-val {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .profile-stat-key {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .val-green { color: var(--success); }
+  .val-red { color: var(--error); }
+  .val-amber { color: var(--warning); }
+  .val-purple { color: var(--accent2); }
+
+  /* ── MISSING BARS ── */
+  .missing-list { display: flex; flex-direction: column; gap: 10px; }
+  .missing-item { }
+  .missing-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .missing-col { font-family: var(--font-mono); color: var(--text2); }
+  .missing-pct { color: var(--text3); font-family: var(--font-mono); }
+  .missing-bar-bg {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .missing-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+    transition: width 0.8s ease;
+  }
+
+  /* ── BUTTON ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .btn-primary:hover { background: #00ffb3; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,229,160,0.25); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-secondary {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .btn-secondary:hover { border-color: var(--border-hover); background: var(--bg2); }
+
+  /* ── PIPELINE STEPS ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .pipeline-step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.3;
+    transition: opacity 0.4s;
+  }
+  .pipeline-step:last-child { border-bottom: none; }
+  .pipeline-step.active { opacity: 1; }
+  .pipeline-step.done { opacity: 0.7; }
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: all 0.4s;
+  }
+  .pipeline-step.active .step-dot {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.1);
+    animation: pulse-dot 1.5s ease infinite;
+  }
+  .pipeline-step.done .step-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #000;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0,229,160,0); }
+  }
+  .step-content { flex: 1; }
+  .step-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .step-desc { font-size: 12px; color: var(--text3); font-family: var(--font-mono); }
+
+  /* ── AGENT LOG ── */
+  .log-container {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .log-container::-webkit-scrollbar { width: 4px; }
+  .log-container::-webkit-scrollbar-track { background: transparent; }
+  .log-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
+
+  .log-line { display: flex; gap: 8px; }
+  .log-time { color: var(--text3); flex-shrink: 0; }
+  .log-msg-tool { color: var(--accent); }
+  .log-msg-result { color: var(--text2); }
+  .log-msg-error { color: var(--error); }
+  .log-msg-info { color: var(--accent2); }
+  .log-msg-done { color: var(--success); font-weight: 500; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+  thead { background: var(--bg3); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text2);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .null-cell { color: var(--error); opacity: 0.5; font-style: italic; }
+
+  /* ── TOOL CALL CARDS ── */
+  .tool-calls { display: flex; flex-direction: column; gap: 8px; }
+  .tool-call-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .tool-call-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .tool-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(124,109,255,0.15);
+    color: var(--accent2);
+    letter-spacing: 0.5px;
+  }
+  .tool-column {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .tool-method {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .tool-reason { font-size: 12px; color: var(--text3); margin-top: 4px; line-height: 1.5; }
+
+  /* ── COMPARISON ── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .comp-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .comp-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    margin-bottom: 16px;
+  }
+  .comp-stat { margin-bottom: 12px; }
+  .comp-key { font-size: 12px; color: var(--text3); margin-bottom: 2px; }
+  .comp-val { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.5s ease;
+    animation: shimmer 1.5s ease infinite;
+  }
+  @keyframes shimmer {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+    100% { filter: brightness(1); }
+  }
+
+  /* ── FADE IN ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 60px 0 40px;
+    color: var(--text3);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    border-top: 1px solid var(--border);
+    margin-top: 80px;
+  }
+  footer span { color: var(--accent); }
+
+  /* ── NOTIFICATION ── */
+  .notif {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 320px;
+  }
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif.success { border-color: var(--success); }
+  .notif.error { border-color: var(--error); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    color: var(--text3);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--accent); border-color: rgba(0,229,160,0.2); background: rgba(0,229,160,0.05); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🧬</div>
+        <div class="logo-text">Auto<span>Clean</span> AI</div>
+      </div>
+      <div class="badge">AGENTIC v2.0</div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">✦ Powered by Llama 3 Function Calling</div>
+    <h1>Your data, <span class="highlight">cleaned<br>by AI agents</span></h1>
+    <p>Upload any messy CSV. Our AI agent calls cleaning tools one by one, sees the results, and decides what to do next — fully autonomously.</p>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- UPLOAD CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-green">📁</div>
+        <div>
+          <div class="card-title">Upload Dataset</div>
+          <div class="card-subtitle">CSV or Excel files</div>
+        </div>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" onchange="handleFile(this)">
+        <div class="upload-icon">⬆</div>
+        <div class="upload-text">Drop your file here</div>
+        <div class="upload-sub">CSV, XLSX — up to 16MB</div>
+      </div>
+      <div class="upload-filename" id="uploadFilename"></div>
+
+      <button class="btn btn-primary" id="cleanBtn" onclick="startCleaning()" disabled>
+        <span id="cleanBtnText">Run AI Agent</span>
+      </button>
+      <a class="btn btn-secondary" id="downloadBtn" style="display:none" href="/api/download">
+        ⬇ Download Cleaned CSV
+      </a>
+    </div>
+
+    <!-- PIPELINE STATUS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-purple">⚡</div>
+        <div>
+          <div class="card-title">Agent Pipeline</div>
+          <div class="card-subtitle">Live status</div>
+        </div>
+      </div>
+      <div class="pipeline">
+        <div class="pipeline-step" id="step-upload">
+          <div class="step-dot">📁</div>
+          <div class="step-content">
+            <div class="step-name">Upload & Profile</div>
+            <div class="step-desc">Analyze dataset structure</div>
+          </div>
+        </div>
+        <div class="pipeline-step" id="step-ai">
+          <div class="step-dot">🤖</div>
+          <div class="step-content">
+            <div class="step-name">AI Decision Loop</div>
+            <div class="step-desc">Agent calls tools one by one</div>
+          </div>
+        </div>
+        <div class="pipeline-step" id="step-execute">
+          <div class="step-dot">⚙</div>
+          <div class="step-content">
+            <div class="step-name">Execute & Feedback</div>
+            <div class="step-desc">Results fed back to AI</div>
+          </div>
+        </div>
+        <div class="pipeline-step" id="step-validate">
+          <div class="step-dot">✓</div>
+          <div class="step-content">
+            <div class="step-name">Validate & Retry</div>
+            <div class="step-desc">AI retries if issues remain</div>
+          </div>
+        </div>
+        <div class="pipeline-step" id="step-done">
+          <div class="step-dot">🎉</div>
+          <div class="step-content">
+            <div class="step-name">Done</div>
+            <div class="step-desc">Clean dataset ready</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="card fade-in" id="profileCard" style="display:none">
+      <div class="card-header">
+        <div class="card-icon icon-amber">📊</div>
+        <div>
+          <div class="card-title">Dataset Profile</div>
+          <div class="card-subtitle">Before cleaning</div>
+        </div>
+      </div>
+      <div class="profile-grid" id="profileGrid"></div>
+      <div class="section-label">Missing Values</div>
+      <div class="missing-list" id="missingList"></div>
+    </div>
+
+    <!-- AGENT LOG CARD -->
+    <div class="card fade-in" id="logCard" style="display:none">
+      <div class="card-header">
+        <div class="card-icon icon-purple">🤖</div>
+        <div>
+          <div class="card-title">Agent Log</div>
+          <div class="card-subtitle">Live tool calls</div>
+        </div>
+      </div>
+      <div class="log-container" id="logContainer">
+        <div class="empty">Waiting for agent to start...</div>
+      </div>
+    </div>
+
+    <!-- RESULTS CARD (full width) -->
+    <div class="card card-full fade-in" id="resultsCard" style="display:none">
+      <div class="card-header">
+        <div class="card-icon icon-green">✨</div>
+        <div>
+          <div class="card-title">Results</div>
+          <div class="card-subtitle">After cleaning</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('preview')">Preview</div>
+        <div class="tab" onclick="switchTab('comparison')">Before vs After</div>
+        <div class="tab" onclick="switchTab('toolcalls')">Tool Calls</div>
+      </div>
+
+      <div class="tab-panel active" id="tab-preview">
+        <div class="table-wrap" id="resultTable"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-comparison">
+        <div class="comparison" id="comparisonGrid"></div>
+      </div>
+
+      <div class="tab-panel" id="tab-toolcalls">
+        <div class="tool-calls" id="toolCallsList"></div>
+      </div>
+    </div>
+
+  </div><!-- end main-grid -->
+
+  <footer>
+    Built with <span>♥</span> using Flask + Llama 3 + Python — AutoClean AI
+  </footer>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<script>
+  let originalProfile = null;
+
+  // ── Drag & Drop ──
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  });
+
+  function handleFile(input) {
+    if (input.files[0]) uploadFile(input.files[0]);
+  }
+
+  async function uploadFile(file) {
+    showNotif(`Uploading ${file.name}...`, 'info');
+    setStep('upload', 'active');
+
+    const fn = document.getElementById('uploadFilename');
+    fn.textContent = '📄 ' + file.name;
+    fn.style.display = 'block';
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (data.error) { showNotif(data.error, 'error'); return; }
+
+      originalProfile = data.profile;
+      renderProfile(data.profile, data.preview, data.columns);
+      setStep('upload', 'done');
+      document.getElementById('cleanBtn').disabled = false;
+      showNotif('Dataset loaded! Ready to clean.', 'success');
+
+      show('profileCard');
+      show('logCard');
+
+    } catch(e) {
+      showNotif('Upload failed: ' + e.message, 'error');
+    }
+  }
+
+  async function startCleaning() {
+    document.getElementById('cleanBtn').disabled = true;
+    document.getElementById('cleanBtnText').innerHTML = '<span class="spinner"></span> Agent running...';
+    document.getElementById('downloadBtn').style.display = 'none';
+
+    // Progress bar
+    const pb = document.getElementById('progressBar');
+    const pf = document.getElementById('progressFill');
+    pb.style.display = 'block';
+    pf.style.width = '0%';
+
+    setStep('ai', 'active');
+    setStep('execute', 'active');
+
+    const log = document.getElementById('logContainer');
+    log.innerHTML = '';
+    addLog('info', 'Agent starting...');
+
+    let prog = 0;
+    const progInterval = setInterval(() => {
+      prog = Math.min(prog + Math.random() * 8, 88);
+      pf.style.width = prog + '%';
+    }, 600);
+
+    try {
+      addLog('info', 'Profiling dataset...');
+      addLog('tool', 'Sending profile to AI (Llama 3)...');
+
+      const res = await fetch('/api/clean', { method: 'POST' });
+      const data = await res.json();
+
+      clearInterval(progInterval);
+      pf.style.width = '100%';
+
+      if (data.error) {
+        showNotif('Error: ' + data.error, 'error');
+        document.getElementById('cleanBtnText').textContent = 'Run AI Agent';
+        document.getElementById('cleanBtn').disabled = false;
+        return;
+      }
+
+      // Render logs
+      log.innerHTML = '';
+      data.tool_calls.forEach(tc => {
+        addLog('tool', `→ [${tc.action}] ${tc.column} (${tc.method})`);
+        addLog('result', `  ✓ ${tc.reason}`);
+      });
+      data.logs.forEach(l => addLog('result', l));
+      addLog('done', '✓ Agent finished. Dataset is clean!');
+
+      setStep('ai', 'done');
+      setStep('execute', 'done');
+      setStep('validate', 'done');
+      setStep('done', 'active');
+      setTimeout(() => setStep('done', 'done'), 800);
+
+      renderResults(data);
+      show('resultsCard');
+      document.getElementById('downloadBtn').style.display = 'flex';
+      showNotif('Cleaning complete! Download your file below.', 'success');
+
+    } catch(e) {
+      clearInterval(progInterval);
+      showNotif('Cleaning failed: ' + e.message, 'error');
+    }
+
+    document.getElementById('cleanBtnText').textContent = 'Run Again';
+    document.getElementById('cleanBtn').disabled = false;
+    setTimeout(() => { pb.style.display = 'none'; }, 1500);
+  }
+
+  function renderProfile(profile, preview, columns) {
+    const grid = document.getElementById('profileGrid');
+    const missing_total = Object.values(profile.missing).reduce((a,b) => a+b, 0);
+
+    grid.innerHTML = `
+      <div class="profile-stat">
+        <div class="profile-stat-val val-purple">${profile.shape[0]}</div>
+        <div class="profile-stat-key">Rows</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val val-purple">${profile.shape[1]}</div>
+        <div class="profile-stat-key">Columns</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val ${missing_total > 0 ? 'val-red' : 'val-green'}">${missing_total}</div>
+        <div class="profile-stat-key">Missing</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val ${profile.duplicates > 0 ? 'val-amber' : 'val-green'}">${profile.duplicates}</div>
+        <div class="profile-stat-key">Duplicates</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val val-amber">${profile.outliers.length}</div>
+        <div class="profile-stat-key">Outlier cols</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val val-purple">${Object.keys(profile.categorical_cardinality).length}</div>
+        <div class="profile-stat-key">Categorical</div>
+      </div>
+    `;
+
+    // Missing bars
+    const ml = document.getElementById('missingList');
+    const missEntries = Object.entries(profile.missing).filter(([,v]) => v > 0);
+    if (missEntries.length === 0) {
+      ml.innerHTML = '<div style="font-size:13px;color:var(--text3);font-family:var(--font-mono)">No missing values</div>';
+    } else {
+      ml.innerHTML = missEntries.map(([col, count]) => {
+        const pct = ((count / profile.shape[0]) * 100).toFixed(1);
+        return `<div class="missing-item">
+          <div class="missing-header">
+            <span class="missing-col">${col}</span>
+            <span class="missing-pct">${count} (${pct}%)</span>
+          </div>
+          <div class="missing-bar-bg">
+            <div class="missing-bar-fill" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function renderResults(data) {
+    // Table
+    const cols = data.columns;
+    const rows = data.preview;
+    let html = `<table><thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+    rows.forEach(row => {
+      html += '<tr>' + cols.map(c => {
+        const v = row[c];
+        const isEmpty = v === '' || v === null || v === undefined;
+        return `<td class="${isEmpty ? 'null-cell' : ''}">${isEmpty ? 'NULL' : v}</td>`;
+      }).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('resultTable').innerHTML = html;
+
+    // Comparison
+    const op = originalProfile;
+    const fp = data.final_profile;
+    const origMissing = Object.values(op.missing).reduce((a,b)=>a+b,0);
+    document.getElementById('comparisonGrid').innerHTML = `
+      <div class="comp-card">
+        <div class="comp-label">Before</div>
+        <div class="comp-stat"><div class="comp-key">Rows</div><div class="comp-val val-purple">${op.shape[0]}</div></div>
+        <div class="comp-stat"><div class="comp-key">Missing values</div><div class="comp-val val-red">${origMissing}</div></div>
+        <div class="comp-stat"><div class="comp-key">Duplicates</div><div class="comp-val val-amber">${op.duplicates}</div></div>
+        <div class="comp-stat"><div class="comp-key">Outlier columns</div><div class="comp-val val-amber">${op.outliers.length}</div></div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-label">After</div>
+        <div class="comp-stat"><div class="comp-key">Rows</div><div class="comp-val val-purple">${data.shape[0]}</div></div>
+        <div class="comp-stat"><div class="comp-key">Missing values</div><div class="comp-val val-green">${data.remaining_nulls}</div></div>
+        <div class="comp-stat"><div class="comp-key">Duplicates</div><div class="comp-val val-green">${data.remaining_duplicates}</div></div>
+        <div class="comp-stat"><div class="comp-key">Outlier columns</div><div class="comp-val val-green">${fp.outliers.length}</div></div>
+      </div>
+    `;
+
+    // Tool calls
+    const tc = data.tool_calls;
+    if (tc.length === 0) {
+      document.getElementById('toolCallsList').innerHTML = '<div class="empty">No tool calls recorded.</div>';
+    } else {
+      document.getElementById('toolCallsList').innerHTML = tc.map((t, i) => `
+        <div class="tool-call-item">
+          <div class="tool-call-header">
+            <span style="color:var(--text3);font-family:var(--font-mono);font-size:11px">${String(i+1).padStart(2,'0')}</span>
+            <span class="tool-badge">${t.action}</span>
+            <span class="tool-column">${t.column || ''}</span>
+            <span class="tool-method">${t.method ? '→ ' + t.method : ''}</span>
+          </div>
+          <div class="tool-reason">💡 ${t.reason || 'No reason provided'}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function addLog(type, msg) {
+    const log = document.getElementById('logContainer');
+    const time = new Date().toLocaleTimeString('en', {hour12:false});
+    const cls = {tool:'log-msg-tool', result:'log-msg-result', error:'log-msg-error', info:'log-msg-info', done:'log-msg-done'}[type] || 'log-msg-result';
+    const div = document.createElement('div');
+    div.className = 'log-line';
+    div.innerHTML = `<span class="log-time">${time}</span><span class="${cls}">${msg}</span>`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function setStep(id, state) {
+    const el = document.getElementById('step-' + id);
+    if (!el) return;
+    el.classList.remove('active', 'done');
+    if (state) el.classList.add(state);
+    if (state === 'done') {
+      el.querySelector('.step-dot').textContent = '✓';
+    }
+  }
+
+  function show(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'block';
+    setTimeout(() => el.classList.add('visible'), 10);
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => {
+      const panels = ['preview','comparison','toolcalls'];
+      t.classList.toggle('active', panels[i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + name);
+    });
+  }
+
+  function showNotif(msg, type='info') {
+    const n = document.getElementById('notif');
+    n.textContent = msg;
+    n.className = 'notif show ' + type;
+    setTimeout(() => n.classList.remove('show'), 3500);
+  }
+</script>
+</body>
+</html>
