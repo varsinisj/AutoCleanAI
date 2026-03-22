@@ -74,7 +74,18 @@ def tool_cast_type(df, column, method):
         return df, f"SKIP: Unknown type '{method}'."
     return df, f"Cast '{column}' to {method}."
 
-
+def tool_standardize_gender(df, column):
+    if column not in df.columns:
+        return df, "SKIP: Column '" + column + "' not found."
+    mapping = {
+        'male': 'Male', 'm': 'Male', 'M': 'Male',
+        'female': 'Female', 'f': 'Female', 'F': 'Female',
+        'Male': 'Male', 'Female': 'Female'
+    }
+    before = df[column].nunique()
+    df[column] = df[column].map(lambda x: mapping.get(str(x).strip(), x) if pd.notna(x) else x)
+    after = df[column].nunique()
+    return df, "Standardized Gender: " + str(before) + " variants -> " + str(after) + " variants (Male/Female)."
 def tool_deduplicate(df, method):
     before = len(df)
     keep = "first" if method == "keep_first" else "last"
@@ -128,6 +139,7 @@ TOOL_MAP = {
     "deduplicate":             lambda df, step: tool_deduplicate(df, step["method"]),
     "standardize_categorical": lambda df, step: tool_standardize_categorical(df, step["column"], step.get("mapping", {})),
     "encode_categorical":      lambda df, step: tool_encode_categorical(df, step["column"], step["method"]),
+    "standardize_gender": lambda df, step: tool_standardize_gender(df, step["column"]),
 }
 
 
